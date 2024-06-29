@@ -105,8 +105,8 @@ Sau khi đã hoàn thành cấu hình cho timer thì ta phải cho phép timer h
 - Các chuẩn giao tiếp ở dưới là truyền nối tiếp, các bit được truyền lần lượt trên 1 đường dây. Bên nhận sẽ nhận các chuỗi mức điện áp và sẽ mã hoá thành các chuỗi bit và xử lý chúng.
 - Các chuẩn giao tiếp ra đời để giải quyết vấn đề phân biệt các bit liên tiếp trong chuỗi.
 ### SPI
-**SPI (Serial Peripheral Interface)** là chuẩn giao tiếp nối tiếp đồng bộ. SPI hoạt động chế độ song công và có thể cho phép 1 *Master* kết nối với nhiều *Slave*. Bao gồm 4 dây:
-- SCK (Serial Clock): Tạo xung tín hiệu để cấp cho các Slave, các Slave và Master sử dụng chung 1 dây SCK.
+**SPI (Serial Peripheral Interface)** là chuẩn giao tiếp nối tiếp đồng bộ. SPI hoạt động ở dạng song công và có thể cho phép 1 *Master* kết nối với nhiều *Slave*. Bao gồm 4 dây:
+- SCK (Serial Clock): Tạo xung tín hiệu để đồng bộ việc truyền/nhận dữ liệu với các Slave, các Slave và Master sử dụng chung 1 dây SCK.
 - MISO (Master In Slave Out): Chân Master dùng để nhận các dữ liệu từ các Slave, các Slave và Master sử dụng chung 1 dây MISO.
 - MOSI (Master Out Slave In): Chân Master dùng để gửi các dữ liệu tới các Slave, các Slave và Master sử dụng chung 1 dây MOSI.
 - SS/CS (Slave Select/Chip Select): Chọn thiết bị Slave cụ thể để giao tiếp. Để chọn Slave giao tiếp thiết bị Master chủ động kéo đường SS tương ứng xuống mức 0 (Low). Có bao nhiêu Slave thì Master sẽ có bấy nhiêu chân SS để các Slave sử dụng riêng.
@@ -125,5 +125,34 @@ SPI có 4 chế độ hoạt động phụ thuộc Clock Polarity – CPOL và  
 	- CPHA = 0: bit được truyền/nhận ở cạnh đầu tiên trong chu kỳ xung clock, VD khi CPOL = 0 thì cạnh đầu tiên là cạnh lên, CPOL = 1 là cạnh xuống.
 	- CPHA = 1: bit được truyền/nhận ở cạnh thứ hai trong chu kỳ xung clock.
 ### I2C
+**I2C (Inter-Intergrated Circuit)** là chuẩn giao tiếp nối tiếp, đồng bộ. I2C hoạt động ở dạng bán song công và có thể cho phép 1 *Master* kết nối với nhiều *Slave*. Bao gồm 2 dây:
+- SCL (Serial Clock): Tạo xung tín hiệu để đồng bộ việc truyền/nhận dữ liệu với các Slave, các Slave và Master sử dụng chung 1 dây SCL.
+- SDA (Serial Data): Chân chứa dữ liệu được truyền đi, các Slave và Master sử dụng chung 1 dây SDA.
+
+I2C là một giao thức kiểu open-drain, tức là các đường dây chỉ được kéo xuống mức 0 khi muốn và sẽ không có mức điện áp cố định mà là sẽ là mức *Floating* ở những trường hợp còn lại. Vì thế, cần phải có điện trở kéo lên nguồn cho mỗi dây để chúng có trạng thái là mức 1 khi chưa bị kéo xuống mức 0.
+
+Nguyên lý hoạt động (cách mà các bit dữ liệu được truyền đi giống với SPI):
+- Dữ liệu được truyền trong I2C sẽ có 1 khung cố định.
+- Khi muốn truyền/nhận dữ liệu nào đó, Master trước tiên sẽ tạo **Start Condition** bằng cách hạ đường SDA trước hạ đường SCL xuống mức 0.
+- Tiếp theo, Master sẽ gửi 7 bit địa chỉ (dữ liệu 8 bit). Các bit địa chỉ được dùng để chọn Slave mà Master muốn giao tiếp. Với 7 bit địa chỉ thì trong I2C có thể chứa tối đa 127 Slave khác nhau (địa chỉ 0x00 là của Master).
+- Sau khi gửi xong 7 bit địa chỉ thì Master tiếp tục gửi 1 bit R/W ngay sau bit địa chỉ cuối cùng. Bit này cho biết Master đang muốn gửi dữ liệu cho Slave (Write - 1) hay đọc dữ liệu từ Slave (Read - 0) có địa chỉ tương ứng.
+- Theo sau mỗi một khung dữ liệu 8 bit sẽ là một bit xác nhận ACK/NACK. Bit này được bên nhận gửi đi cho bên gửi, cho biết rằng bên nhận đã nhận thành công (ACK - 0) hoặc không (NACK - 1).
+- Khi Master gửi xong 8 bit trong khung dữ liệu, nó sẽ cho chạy timer 1 khoảng thời gian nhỏ, nếu không có Slave nào kéo chân SDA xuống mức 0 (chưa có ACK) khi timer chưa tràn thì Master sẽ hiểu là dữ liệu đã gửi không thành công (hoặc là không có Slave nào có địa chỉ tương ứng mà Master đã gửi).
+- Sau khi Master phát hiện ACK từ Slave, nó sẽ tiến hành truyền/nhận khung dữ liệu 8 bit đầu tiên (MSB gửi trước, LSB gửi sau) tuỳ vào bit R/W ở khung dữ liệu đầu tiên. Sau đó, bên nhận sẽ gửi bit ACK.
+- Sau khi đã phát hiện ACK thì sẽ tiếp tục truyền các khung dữ liệu cho tới khi hết dữ liệu.
+- Khi muốn kết thúc quá trình truyền/nhận dữ liệu nào đó, Master sẽ tạo **Stop Condition** bằng cách thả đường SCL trước thả đường SDA lên mức 1.
 
 ### UART
+**UART (Universal Asynchronous Receiver-Transmitter)** là một giao thức truyền thông phần cứng dùng giao tiếp nối tiếp không đồng bộ. UART hoạt động ở dạng song công và chỉ cho 1 máy gửi kết nối với 1 máy nhận. Bao gồm 2 dây:
+- TX (Transmitt): Chân dùng để gửi dữ liệu đi
+- RX (Receive): Chân dùng để nhận tín hiệu
+
+Vì UART không có chân xung clock để đồng bộ dữ liệu giữa bên gửi và bên nhận, nên nó sẽ sử dụng timer để xác định khoảng thời gian giữa 2 bit được truyền/nhận. Bên gửi và bên nhận sẽ đồng nhất sau khoảng thời gian bao nhiêu thì bit tiếp theo sẽ được truyền/nhận. Khoảng thời gian này được tính sử dụng thông số là **Baud rate**.
+
+**Baud rate** là thông số cho biết bao nhiêu bit được gửi đi trong vòng 1s (đơn vị: bps - bits per second). Nhờ vào số bit được truyền trong 1s, ta tam suất để tính được sau bao nhiêu giây thì bit tiếp theo sẽ được gửi. Từ đó, bên gửi và bên nhận sẽ chỉnh sửa timer của mình sao cho khớp với khoảng thời gian này để đồng bộ được dữ liệu với nhau.
+
+Nguyên lý hoạt động:
+- Khi muốn truyền dữ liệu nào đó, bên gửi trước tiên sẽ tạo **Start Condition** bằng cách hạ đường TX từ mức 1 xuống mức 0 trong 1 khoảng thời gian đã đồng nhất ban đầu.
+- Sau đó, bên gửi và bên nhận sẽ khởi động timer, bên gửi sau khi timer tràn sẽ gửi 1 bit, bên nhận sau khi timer tràn sẽ nhận 1 bit. Quá trình này diễn ra tới khi bit dữ liệu cuối cùng được gửi.
+- Ngay sau khi các bit dữ liệu được gửi, có hoặc không 1 bit Parity được gửi. Bit Parity được dùng để kiểm tra lỗi trong các bit dữ liệu. Có 2 loại bit Parity là Parity chẵn (đảm bảo tổng số bit 1 trong các bit dữ liệu và bit Parity là số chẵn) và Parity lẻ (đảm bảo tổng số bit 1 trong các bit dữ liệu và bit Parity là số lẻ).
+- Sau khi hoàn thành gửi Parity bit, bên gửi sẽ tạo **Stop Condition** bằng cách kéo đường TX từ 0 lên mức 1 trong khoảng thời gian từ 1 đến 2 lần khoảng thời gian đã đồng nhất ban đầu.
