@@ -10,8 +10,8 @@ Trước khi sử dụng các ngoại vi, ta phải:
     ```
         RCC_APB1ClockCmd(RCC_APB1Periph_TIM2, DISABLE);
 - Cấu hình cho ngoại vi. Các tham số cấu hình cho GPIO được tổ chức trong 1 struct "GPIO_InitTypeDef" với các tham số sau:
-    - GPIO_Pin: chân cần được cấu hình. Có định dạng là: "GPIO_Pin_\<chân cần cấu hình\>". Có thể cấu hình nhiều chân với cùng chế độ và tốc độ giống nhau bằng cách sử dụng toán tử OR nhiều định dạng chân lại.
-    - GPIO_Mode: chế độ muốn cấu hình bao gồm các giá trị sau:
+    - **GPIO_Pin**: chân cần được cấu hình. Có định dạng là: "GPIO_Pin_\<chân cần cấu hình\>". Có thể cấu hình nhiều chân với cùng chế độ và tốc độ giống nhau bằng cách sử dụng toán tử OR nhiều định dạng chân lại.
+    - **GPIO_Mode**: chế độ muốn cấu hình bao gồm các giá trị sau:
     ```
         typedef enum {
             GPIO_Mode_AIN = 0x00,            //Analog Input
@@ -24,7 +24,7 @@ Trước khi sử dụng các ngoại vi, ta phải:
             GPIO_Mode_AF_PP = 0x18           //Chế độ ngoại vi khác dạng push-pull
         } GPIOMode_TypeDef;
     ```
-    - GPIO_Speed: tốc độ đáp ứng của chân bao gồm 3 tốc độ 2MHz, 10MHz và 50MHz. Có định dạng: "GPIO_Speed_\<tốc độ\>".
+    - **GPIO_Speed**: tốc độ đáp ứng của chân bao gồm 3 tốc độ 2MHz, 10MHz và 50MHz. Có định dạng: "GPIO_Speed_\<tốc độ\>".
 - Để gắn các giá trị muốn cấu hình vào các thanh ghi thì ta sử dụng hàm "GPIO_Init" có 2 tham số:
     - Tham số đầu là tên ngoại vi muốn cấu hình
     - Tham số thứ hai là con trỏ đến struct "GPIO_InitTypeDef"
@@ -76,10 +76,10 @@ Ví dụ: Khi bên truyền bắt đầu truyền thì bên nhận sẽ lập t�
 **Timer** có vai trò đếm lên hoặc xuống mỗi chu kỳ clock. Xung clock có thể từ rất nhiều nguồn khác nhau, ví dụ như khi gặp cạnh lên hoặc cạnh xuống khi nhấn nút,... 
 
 Sau khi cấp clock cho timer, ta tiến hành cấu hình cho timer. Ta sử dụng chế độ cơ bản của timer nên ta sẽ cấu hình struct "TIM_TimeBaseInitTypeDef" gồm các biến sau:
-- TIM_ClockDivision: chia tần số gốc của CPU là 72MHz để cấp cho timer, có 3 bộ chia là chia 1, 2, 4. Định dạng cho giá trị này là: TIM_CKD_DIV\<số chia\>
-- TIM_Prescaler: xác định bao nhiêu dao động thì timer sẽ đếm lên 1 lần. Vì là kiểu uint16_t nên giá trị mà biến này chấp nhận là từ 0 đến 65535.
-- TIM_Period: xác định giá trị mà timer cần phải đếm tới (hoặc từ giá trị này đếm xuống 0) rồi mới tràn. Vì là kiểu uint16_t nên giá trị mà biến này chấp nhận là từ 0 đến 65535.
-- TIM_CounterMode: xác định chế độ đếm. Có 2 chế độ thường dùng là đếm lên "TIM_CounterMode_Up" và đếm xuống "TIM_CounterMode_Down"
+- **TIM_ClockDivision**: chia tần số gốc của CPU là 72MHz để cấp cho timer, có 3 bộ chia là chia 1, 2, 4. Định dạng cho giá trị này là: TIM_CKD_DIV\<số chia\>
+- **TIM_Prescaler**: xác định bao nhiêu dao động thì timer sẽ đếm lên 1 lần. Vì là kiểu uint16_t nên giá trị mà biến này chấp nhận là từ 0 đến 65535.
+- **TIM_Period**: xác định giá trị mà timer cần phải đếm tới (hoặc từ giá trị này đếm xuống 0) rồi mới tràn. Vì là kiểu uint16_t nên giá trị mà biến này chấp nhận là từ 0 đến 65535.
+- **TIM_CounterMode**: xác định chế độ đếm. Có 2 chế độ thường dùng là đếm lên "TIM_CounterMode_Up" và đếm xuống "TIM_CounterMode_Down"
 
 Để ghi các giá trị đã cấu hình vào các thanh ghi của timer thì ta sử dụng hàm "TIM_TimeBaseInit" với 2 tham số:
 - Tham số đầu là timer ta sử dụng. STM32F103C8 có 7 timer bao gồm 1 systick timer, 2 watchdog timer và còn 4 timer cho các chức năng mong muốn.
@@ -118,12 +118,54 @@ Nguyên lý hoạt động:
 - Lặp lại quá trình cho đến khi truyền/nhận xong 8 bit trong thanh ghi.
 
 SPI có 4 chế độ hoạt động phụ thuộc Clock Polarity – CPOL và  Phase - CPHA:
-- CPOL quyết định hình dạng của xung clock.
+- CPOL quyết định cực tính (hình dạng) của xung clock.
 	- CPOL = 0: khi không truyền/nhận, SCK sẽ ở mức 0. Khi muốn truyền/nhận thì Master sẽ kéo chân SCK lên mức 1 theo chu kỳ.
  	- CPOL = 1: khi không truyền/nhận, SCK sẽ ở mức 1. Khi muốn truyền/nhận thì Master sẽ kéo chân SCK lên mức 0 theo chu kỳ (ngược lại với CPOL = 0).
-- CPHA quyết định nơi mà bit sẽ được truyền đi trong một chu kỳ xung clock.
+- CPHA quyết định pha của xung clock, nơi mà bit sẽ được truyền đi trong một chu kỳ xung clock.
 	- CPHA = 0: bit được truyền/nhận ở cạnh đầu tiên trong chu kỳ xung clock, VD khi CPOL = 0 thì cạnh đầu tiên là cạnh lên, CPOL = 1 là cạnh xuống.
 	- CPHA = 1: bit được truyền/nhận ở cạnh thứ hai trong chu kỳ xung clock.
+
+Tương tự các ngoại vi khác, các tham số SPI được cấu hình trong Struct SPI_InitTypeDef:
+- **SPI_Mode**: Chế độ hoạt động của thiết bị SPI, bao gồm *SPI_Mode_Master* và *SPI_Mode_Slave*
+- **SPI_Direction**: Kiểu truyền của thiết bị, bao gồm:
+```
+	SPI_Direction_2Lines_Fullduplex		// Song công
+	SPI_Direction_2Lines_RxOnly			// 2 dây nhưng chỉ nhận
+	SPI_Direction_1Line_Rx				// Sử dụng MOSI hoặc MISO chỉ để nhận
+	SPI_Direction_1Line_Tx				// Sử dụng MOSI hoặc MISO chỉ để truyền
+```
+- **SPI_BaudRatePrescaler**: Hệ số chia clock cấp cho Module SPI. Thông số này chia clock nguồn trên bus tương ứng của SPI để cấp cho chân SCK hoạt động và có 8 giá trị từ 2 đến 256. Cú pháp: *SPI_BaudRatePrescaler_\<hệ số chia\>*
+- **SPI_CPOL**: Hệ số CPOL của thiết bị, bao gồm *SPI_CPOL_Low* và *SPI_CPOL_High*
+- **SPI_CPHA**: Hệ số CPHA của thiết bị, bao gồm *SPI_CPHA_1Edge* (CPHA = 0) và *SPI_CPHA_2Edge* (CPHA = 1)
+- **SPI_DataSize**: Số bit được truyền, bao gồm *SPI_DataSize_8b* hoặc *SPI_DataSize_16b*
+- **SPI_FirstBit**: Bit đầu tiên được truyền, baoo gồm *SPI_FirstBit_MSB* và *SPI_FirstBit_LSB*
+- **SPI_CRCPolynomial**: Đặt giá trị đa thức kiểm tra chu kỳ tuần hoàn cho việc tính toán CRC, Master và Slave phải sử dụng chung 1 giá trị SPI_CRCPolynomial. Sử dụng hàm *SPI_CalculateCRC(SPI1, ENABLE)* để bật tính năng tính CRC
+- **SPI_NSS**: Cấu hình chân SS là điều khiển bằng thiết bị hay phần mềm, bao gồm *SPI_NSS_Soft* và *SPI_NSS_Hard*.
+
+Để ghi các giá trị đã cấu hình vào các thanh ghi của SPI thì ta sử dụng hàm *SPI_Init* với 2 tham số:
+- Tham số đầu là kênh SPI ta sử dụng. STM32F103C8 có 2 kênh SPI là *SPI1* và *SPI2*.
+- Tham số thứ hai là con trỏ đến struct "SPI_InitTypeDef" đã cài đặt ở trên.
+
+Sau khi đã hoàn thành cấu hình cho SPI thì ta phải cho phép SPI hoạt động bằng hàm *SPI_Cmd* với 2 tham số:
+- Tham số đầu tiên: kênh SPI mà ta sử dụng.
+- Tham thứ hai: có cho phép ngoại vi này hoạt động hay không. Có là **ENABLE**, không là **DISABLE**.
+
+```
+	SPI_InitTypeDef SPI_InitStructure;
+
+	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16;
+	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+	SPI_InitStructure.SPI_CRCPolynomial = 7;
+	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+
+	SPI_Init(SPI1, &SPI_InitStructure);
+	SPI_Cmd(SPI1, ENABLE);
+```
 ### I2C
 **I2C (Inter-Intergrated Circuit)** là chuẩn giao tiếp nối tiếp, đồng bộ. I2C hoạt động ở dạng bán song công và có thể cho phép 1 *Master* kết nối với nhiều *Slave*. Bao gồm 2 dây:
 - SCL (Serial Clock): Tạo xung tín hiệu để đồng bộ việc truyền/nhận dữ liệu với các Slave, các Slave và Master sử dụng chung 1 dây SCL.
