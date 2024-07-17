@@ -143,7 +143,7 @@ Tương tự các ngoại vi khác, các tham số SPI được cấu hình tron
 - **SPI_NSS**: Cấu hình chân SS là điều khiển bằng thiết bị hay phần mềm, bao gồm *SPI_NSS_Soft* và *SPI_NSS_Hard*.
 
 Để ghi các giá trị đã cấu hình vào các thanh ghi của SPI thì ta sử dụng hàm *SPI_Init* với 2 tham số:
-- Tham số đầu là kênh SPI ta sử dụng. STM32F103C8 có 2 kênh SPI là *SPI1* và *SPI2*.
+- Tham số đầu là kênh SPI ta sử dụng. STM32F103C8 có 3 bộ SPI, SPI1 nằm trên bus APB2, 2 bộ còn lại nằm trên APB1.
 - Tham số thứ hai là con trỏ đến struct "SPI_InitTypeDef" đã cài đặt ở trên.
 
 Sau khi đã hoàn thành cấu hình cho SPI thì ta phải cho phép SPI hoạt động bằng hàm *SPI_Cmd* với 2 tham số:
@@ -198,3 +198,25 @@ Nguyên lý hoạt động:
 - Sau đó, bên gửi và bên nhận sẽ khởi động timer, bên gửi sau khi timer tràn sẽ gửi 1 bit, bên nhận sau khi timer tràn sẽ nhận 1 bit. Quá trình này diễn ra tới khi bit dữ liệu cuối cùng được gửi.
 - Ngay sau khi các bit dữ liệu được gửi, có hoặc không 1 bit Parity được gửi. Bit Parity được dùng để kiểm tra lỗi trong các bit dữ liệu. Có 2 loại bit Parity là Parity chẵn (đảm bảo tổng số bit 1 trong các bit dữ liệu và bit Parity là số chẵn) và Parity lẻ (đảm bảo tổng số bit 1 trong các bit dữ liệu và bit Parity là số lẻ).
 - Sau khi hoàn thành gửi Parity bit, bên gửi sẽ tạo **Stop Condition** bằng cách kéo đường TX từ 0 lên mức 1 trong khoảng thời gian từ 1 đến 2 lần khoảng thời gian đã đồng nhất ban đầu.
+
+## ADC
+**ADC (Analog-to-Digital Converter)** là một mạch điện tử chuyển đổi tín hiệu tương tự (analog signal) thành tín hiệu số (digital signal). ADC làm được điều này bằng cách chia dải mức tín hiệu analog thành nhiều mức, gán giá trị nhị phân cho từng mức, so sánh giá trị analog với các mức đó để quy về mức nhị phân phù hợp.\
+Có 2 thông số quan trọng trong ADC:
+- Độ phân giải: Chỉ số bit cần thiết để chứa hết các mức giá trị số sau khi chuyển đổi. Có thể hiểu là độ phân giải quyết định số mức chia của dải tín hiệu analog và ta phải điền vào các mức đó các giá trị nhị phân để phân biệt các mức với nhau, độ phân giải càng cao, càng nhiều mức thì sẽ cần càng nhiều bit nhị phân để phân biệt các mức với nhau.
+- Tần số lấy mẫu: là số lần mà ADC lấy mẫu và chuyển đổi thành tín hiệu số trong vòng 1s. Có thể hiểu là khoảng thời gian giữa 2 lần lấy mẫu và chuyển đổi liên tiếp của ADC. Tần số lấy mẫu càng cao thì số lượng mẫu được lấy và chuyển đổi sẽ càng nhiều, các mẫu càng sát với nhau, càng giống tín hiệu gốc.
+STM32F103C8 có 3 bộ ADC, mỗi bộ gồm 9 kênh với 2 chế độ hoạt động sau:
+- Regular Inversion:
+	- Single: Khi được yêu cầu chuyển đổi, chỉ 1 kênh được hoạt động và đọc dữ liệu chuyển đổi 1 lần
+	- Single Continuous: Khi được yêu cầu chuyển đổi, chỉ 1 kênh được hoạt động và đọc dữ liệu chuyển đổi liên tục
+   	- Scan: Khi được yêu cầu chuyển đổi, quét qua nhiều kênh và đọc dữ liệu chuyển đổi 1 lần
+   	- Scan Continuous: Khi được yêu cầu chuyển đổi, quét qua nhiều kênh và đọc dữ liệu chuyển đổi liên tục
+- Injected Inversion: Trong trường hợp nhiều kênh hoạt động, kênh có mức độ ưu tiên cao hơn có thể tạo ra một *Injected Trigger*. Khi gặp *Injected Trigger*, nếu kênh đang hoạt động có độ ưu tiên thấp hơn thì sẽ bị ngưng lại để kênh được ưu tiên kia có thể hoạt động.
+
+## DMA
+Việc trao đổi và lưu dữ liệu từ ngoại vi được CPU điều khiển. CPU sẽ trao đổi dữ liệu từ các ngoại vi và dẫn các dữ liệu đến RAM thông qua các đường bus. Ngoài ra, CPU còn phải đọc các lệnh từ FLASH để thực thi các lệnh và còn nhiều việc khác. CPU không thể làm một lúc nhiều công việc nên các dữ liệu từ ngoại vi có thể bị mất. Vì thế, DMA ra đời.\
+
+**DMA (Direct Memory Access)** là một cơ chế giúp các thành phần phần cứng hay ngoại vi có thể giao tiếp trực tiếp với bộ nhớ. DMA có thể giúp việc trao đổi dữ liệu giữa ngoại vi và bộ nhớ hoặc giữa bộ nhớ và bộ nhớ không cần thông qua CPU hay những đường bus của CPU. Điều này giúp CPU không cần phải lo về việc đọc dữ liệu từ ngoại vi và có thể làm những công việc khác.\
+
+DMA có 2 chế độ hoạt động chính:
+- Normal: DMA truyền dữ liệu cho tới khi truyền đủ 1 lượng dữ liệu giới hạn đã khai báo, sau khi đã truyền đủ thì DMA sẽ dừng hoạt động. Muốn nó tiếp tục hoạt động thì phải khởi động lại (truyền 1 lần).
+- Circular: Khi DMA truyền đủ 1 lượng dữ liệu giới hạn đã khai báo thì nó sẽ truyền tiếp về vị trí ban đầu (truyền liên tục).
