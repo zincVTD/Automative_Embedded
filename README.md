@@ -199,7 +199,7 @@ Nguyên lý hoạt động:
 - Ngay sau khi các bit dữ liệu được gửi, có hoặc không 1 bit Parity được gửi. Bit Parity được dùng để kiểm tra lỗi trong các bit dữ liệu. Có 2 loại bit Parity là Parity chẵn (đảm bảo tổng số bit 1 trong các bit dữ liệu và bit Parity là số chẵn) và Parity lẻ (đảm bảo tổng số bit 1 trong các bit dữ liệu và bit Parity là số lẻ).
 - Sau khi hoàn thành gửi Parity bit, bên gửi sẽ tạo **Stop Condition** bằng cách kéo đường TX từ 0 lên mức 1 trong khoảng thời gian từ 1 đến 2 lần khoảng thời gian đã đồng nhất ban đầu.
 
-## ADC
+## Bài 4: ADC
 **ADC (Analog-to-Digital Converter)** là một mạch điện tử chuyển đổi tín hiệu tương tự (analog signal) thành tín hiệu số (digital signal). ADC làm được điều này bằng cách chia dải mức tín hiệu analog thành nhiều mức, gán giá trị nhị phân cho từng mức, so sánh giá trị analog với các mức đó để quy về mức nhị phân phù hợp.\
 Có 2 thông số quan trọng trong ADC:
 - Độ phân giải: Chỉ số bit cần thiết để chứa hết các mức giá trị số sau khi chuyển đổi. Có thể hiểu là độ phân giải quyết định số mức chia của dải tín hiệu analog và ta phải điền vào các mức đó các giá trị nhị phân để phân biệt các mức với nhau, độ phân giải càng cao, càng nhiều mức thì sẽ cần càng nhiều bit nhị phân để phân biệt các mức với nhau.
@@ -212,7 +212,7 @@ STM32F103C8 có 3 bộ ADC, mỗi bộ gồm 9 kênh với 2 chế độ hoạt 
    	- Scan Continuous: Khi được yêu cầu chuyển đổi, quét qua nhiều kênh và đọc dữ liệu chuyển đổi liên tục
 - Injected Inversion: Trong trường hợp nhiều kênh hoạt động, kênh có mức độ ưu tiên cao hơn có thể tạo ra một *Injected Trigger*. Khi gặp *Injected Trigger*, nếu kênh đang hoạt động có độ ưu tiên thấp hơn thì sẽ bị ngưng lại để kênh được ưu tiên kia có thể hoạt động.
 
-## DMA
+## Bài 5: DMA
 Việc trao đổi và lưu dữ liệu từ ngoại vi được CPU điều khiển. CPU sẽ trao đổi dữ liệu từ các ngoại vi và dẫn các dữ liệu đến RAM thông qua các đường bus. Ngoài ra, CPU còn phải đọc các lệnh từ FLASH để thực thi các lệnh và còn nhiều việc khác. CPU không thể làm một lúc nhiều công việc nên các dữ liệu từ ngoại vi có thể bị mất. Vì thế, DMA ra đời.\
 
 **DMA (Direct Memory Access)** là một cơ chế giúp các thành phần phần cứng hay ngoại vi có thể giao tiếp trực tiếp với bộ nhớ. DMA có thể giúp việc trao đổi dữ liệu giữa ngoại vi và bộ nhớ hoặc giữa bộ nhớ và bộ nhớ không cần thông qua CPU hay những đường bus của CPU. Điều này giúp CPU không cần phải lo về việc đọc dữ liệu từ ngoại vi và có thể làm những công việc khác.\
@@ -220,3 +220,34 @@ Việc trao đổi và lưu dữ liệu từ ngoại vi được CPU điều khi
 DMA có 2 chế độ hoạt động chính:
 - Normal: DMA truyền dữ liệu cho tới khi truyền đủ 1 lượng dữ liệu giới hạn đã khai báo, sau khi đã truyền đủ thì DMA sẽ dừng hoạt động. Muốn nó tiếp tục hoạt động thì phải khởi động lại (truyền 1 lần).
 - Circular: Khi DMA truyền đủ 1 lượng dữ liệu giới hạn đã khai báo thì nó sẽ truyền tiếp về vị trí ban đầu (truyền liên tục).
+
+## Bài 6: FLASH và Bootloader
+Chip STM32F1 có 2 bộ nhớ chính:
+- **RAM (Random Access Memory)** là một loại bộ nhớ cho phép truy-xuất ngẫu nhiên đến một vị trí bất kỳ trong bộ nhớ thông qua địa chỉ bộ nhớ. RAM có tốc độ đọc/ghi nhanh nhưng dữ liệu sẽ mất bị mất khi ngưng cấp nguồn. RAM thường được dùng để lưu trữ tạm thời dữ liệu và các lệnh đang được thực thi.
+- **FLASH** là một bộ nhớ có thể xoá và lập trình. FLASH có tốc độ ghi chậm nhưng đọc nhanh và nó không bị mất dữ liệu khi ngưng cấp nguồn. FLASH được chia nhỏ thành các *Bank*, mỗi bank gồm một hoặc nhiều *Page*, mỗi page có kích thước là 1Kb. FLASH giới hạn số lần xoá/ghi và chỉ có thể ghi theo khối 2/4 byte. Vì FLASH không thể đẩy bit 1 xuống 0 nên trước khi ghi thì phải xoá FLASH trước. FLASH thường được dùng để lưu chương trình.\
+Bộ nhớ chương trình được chia thành nhiều vùng khác nhau. Trong đó, 512MB đầu tiên được dành cho vùng code (các vùng dưới đây có địa chỉ theo thứ tự giảm dần là đi từ 0x1FFF FFFF đến 0x0000 0000):
+- Option Bytes: Vùng byte tùy chọn chứa một loạt cờ bit có thể được sử dụng để định cấu hình một số khía cạnh của MCU (như bảo vệ đọc ghi FLASH, v.v…)
+- System Memory: Là vùng ROM dành riêng cho Bootloader được lập trình sẵn vào chip trong quá trình sản xuất. Những Bootloader này có thể được sử dụng để tải code từ một số thiết bị ngoại vi, bao gồm USART, USB và CAN Bus.
+- Bộ nhớ FLASH
+### FLASH
+Bộ nhớ FLASH có địa chỉ bắt đầu từ 0x0000 0000. Trong dòng VĐK STM32, vùng để lưu code là từ 0x0800 0000. Khi nạp chương trình thì sẽ mặc định lưu bắt đầu từ địa chỉ này với **MSP (Main Stack Pointer)** sẽ ở địa chỉ đó luôn và **Vector Table** (phần đầu tiên trong bộ nhớ của chương trình, chứa các vector ngắt) bắt đầu từ địa chỉ 0x0800 0004 (đây là địa chỉ của Reset_Handler vì nó là vector ngắt đầu tiên trong Vector Table).\
+FLASH có thể thao tác ghi trên từng Word (4 byte) hoặc Halfword (2 byte) nhưng khi xoá thì xoá từng page. Vì bộ nhớ Flash là nơi lưu chương trình, để tránh trường hợp vô tình làm thay đổi dữ liệu chương trình, Flash có 1 cơ chế đơn giản là LOCK và UNLOCK vùng nhớ.
+- Sau khi reset, Flash sẽ vào trạng thái LOCK để bảo vệ dữ liệu
+- Khi người dùng muốn thao tác trên Flash thì cần phải UNLOCK nó trước
+- Muốn ghi dữ liệu thì phải xoá hết dữ liệu trước
+
+### Bootloader
+**Quá trình reset cảu vi điều khiển**:
+- Hệ thống sẽ khởi tạo phần cứng, thiết lập các cấu hình
+- CPU tìm đến Vector Table trên bộ nhớ của chương trình
+- CPU sẽ nạp giá trị tại ô nhớ đầu tiên của Vector Table vào thanh ghi MSP (ở trạng thái reset). Mặc định đối với STM32F1 là 0x0800 0000
+- CPU sẽ lấy địa chỉ của Reset Handler được đặt trong ô nhớ thứ 2 của Vector Table, nạp vào thanh ghi PC để thực hiện hàm Reset Handler để khởi tạo ban đầu của hệ thống
+- Gọi đến hàm main() trong file main.c để thực hiện chương trình chính
+
+**Bootloader** là chương trình đầu tiên được chạy khi chip hoạt động. Bootloader có mục tiêu chính là nâng cấp hoặc sửa đổi phần mềm hệ thống mà không cần sự can thiệp của các công cụ nâng cấp chương trình cơ sở chuyên dụng. Vị trí của chương trình Bootloader thường được bắt đầu tại địa chỉ đầu tiên của bộ nhớ Flash (STM32F1 mặc định là 0x0800 0000), đây là địa chỉ mặc định sẽ được CPU thực thi sau khi Reset.\
+
+Chương trình Boot hoạt động như sau:
+- Khi reset, VĐK nhảy đến Reset_Handler (0x0800 0000) thực thi và nhảy tới hàm main() của chương trình boot
+- Chương trình boot sẽ lấy địa chỉ từ firmware mà nó muốn nhảy đến bằng cách điều khiển MSP đến địa chỉ đó
+- Đặt giá trị thanh ghi PC là ô nhớ tiếp theo sau MSP để VĐK thực thi reset_handler của firmware mới sau khi nhảy địa chỉ
+- Cài đặt reset_handler của firmware mới bằng địa chỉ cần phải nhảy tới để sau khi reset, thanh ghi PC sẽ nhảy tới firmware mới.
